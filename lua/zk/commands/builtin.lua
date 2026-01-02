@@ -81,7 +81,7 @@ local function insert_link(selected, opts)
   opts = vim.tbl_extend("force", {}, opts or {})
 
   local location = util.get_lsp_location_from_selection()
-	local selected_text = ""
+  local selected_text = ""
 
   if not selected then
     location = util.get_lsp_location_from_caret()
@@ -130,5 +130,36 @@ commands.add("ZkTags", function(options)
     end, tags)
     options = vim.tbl_extend("keep", { tags = tags }, options or {})
     zk.edit(options, { title = "Zk Notes for tag(s) " .. vim.inspect(tags) })
+  end)
+end)
+
+commands.add("ZkTagsSort", function(options)
+  options = options or {}
+
+  local tag_sort_options = {}
+  local edit_sort_options = {}
+  if options.sort ~= nil and vim.tbl_contains(options.sort, "note-count") then
+    if #options.sort == 1 then
+      tag_sort_options = options.sort
+    else
+      for _, v in ipairs(options.sort) do
+        if v == "note-count" then
+          table.insert(tag_sort_options, v)
+        else
+          table.insert(edit_sort_options, v)
+        end
+      end
+    end
+  end
+
+  local tag_options = vim.tbl_extend("force", options, { sort = tag_sort_options })
+  zk.pick_tags(tag_options, { title = "Zk Tags" }, function(tags)
+    tags = vim.tbl_map(function(v)
+      return v.name
+    end, tags)
+
+    local edit_options = vim.tbl_extend("force", options, { tags = tags, sort = edit_sort_options })
+    print(vim.inspect(edit_options))
+    zk.edit(edit_options, { title = "Zk Notes for tag(s) " .. vim.inspect(tags) })
   end)
 end)
